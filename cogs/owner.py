@@ -1,9 +1,7 @@
+from bot_errors import NotOnServerError
 import discord
-from discord.ext import commands, tasks
-
-import logging
-
-from bot_errors import *
+from discord.ext import commands
+from bot_errors import NoPermissionError
 import aiohttp
 
 
@@ -18,7 +16,7 @@ def check_mod(user, admin_users):
     return False
 
 
-class owner(commands.Cog, name="Owner"):
+class Owner(commands.Cog, name="Owner"):
     def __init__(self, bot):
         self.bot = bot
         self.ses = aiohttp.ClientSession(loop=bot.loop)
@@ -83,4 +81,4 @@ class owner(commands.Cog, name="Owner"):
         # await context.send(embed=embed)
 
 def setup(bot):
-    bot.add_cog(owner(bot))
+    bot.add_cog(Owner(bot))

@@ -11,7 +11,7 @@ Robert A. USF Computer Science
 A cog to hold all of the functions used to play music for the bot.
 """
 
-class music(commands.Cog):
+class Music(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
@@ -334,4 +334,4 @@ class music(commands.Cog):
         await ctx.channel.send("Bot player has been cleared successfully.")
         
 def setup(bot):
-    bot.add_cog(music(bot))
+    bot.add_cog(Music(bot))

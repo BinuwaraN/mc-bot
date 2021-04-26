@@ -11,7 +11,7 @@ import datetime
 import io
 import re
 import base64
-from bot_errors import NoPermissionError, NotOnServerError
+from bot_errors import NotOnServerError
 
 
 log = logging.getLogger("bot")

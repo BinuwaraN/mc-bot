@@ -10,7 +10,7 @@ The actual playl command has been moved to music now for more concise code.
 """
 
 
-class playlist(commands.Cog):
+class Playlist(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
@@ -205,10 +205,4 @@ class playlist(commands.Cog):
             await ctx.channel.send("There is nothing playing.")
 
 def setup(bot):
-    bot.add_cog(playlist(bot))
-
-
-
-
-def setup(bot):
-    bot.add_cog(playlist(bot))
+    bot.add_cog(Playlist(bot))

@@ -1,4 +1,3 @@
-import json
 import discord
 import logging
 from discord.ext import commands
@@ -10,8 +9,6 @@ import base64
 
 import classyjson as cj
 import arrow
-
-from bot_errors import *
 
 log = logging.getLogger("bot")
 

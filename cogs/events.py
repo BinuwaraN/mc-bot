@@ -1,8 +1,8 @@
+from bot_errors import NoPermissionError
 from discord.ext import commands
 import traceback
 import discord
 import random
-from bot_errors import *
 import sys
 import logging
 
