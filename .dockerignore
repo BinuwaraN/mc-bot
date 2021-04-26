@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+*$py.class
+
+.env
+.vscode
+.gitignore
+
+lavalink
+
+Procfile
+
+runtime.txt
+run.bat
+notes.txt
