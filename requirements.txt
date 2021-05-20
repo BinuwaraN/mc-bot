@@ -6,9 +6,11 @@ jishaku
 requests
 arrow
 datetime
-youtube_dl
 lavalink
 idna<3
 certifi>=2017.4.17
 classy-json
 discord-pretty-help
+feedparser
+pytz
+beautifulsoup4
