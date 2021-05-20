@@ -14,3 +14,4 @@ discord-pretty-help
 feedparser
 pytz
 beautifulsoup4
+aiodns
