@@ -1,6 +1,5 @@
 from urllib.parse import quote as urlquote
 from discord.ext import commands
-import classyjson as cj
 import discord
 import aiohttp
 import random
