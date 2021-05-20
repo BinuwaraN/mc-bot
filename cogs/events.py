@@ -96,7 +96,7 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
-        log.info('member.id joined the server')
+        log.info(f'{member.id} joined the server')
         welcome_messages = [
             f'Brace yourselves. {member.name} just joined the server.',
             f'Challenger approaching - {member.name} has appeared',
