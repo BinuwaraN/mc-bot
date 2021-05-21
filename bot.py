@@ -27,8 +27,6 @@ initial_extensions = [
     'cogs.owner',
     'cogs.events',
     'cogs.fun',
-    'cogs.music',
-    'cogs.playlist',
     'cogs.news',
 ]
 

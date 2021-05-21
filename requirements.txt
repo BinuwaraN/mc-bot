@@ -6,7 +6,6 @@ jishaku
 requests
 arrow
 datetime
-lavalink
 idna<3
 certifi>=2017.4.17
 classy-json
