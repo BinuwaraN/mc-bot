@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime
 from time import mktime
-from typing import Dict, Text
+from typing import Dict
 from typing import Union
 import aiohttp
 import socket

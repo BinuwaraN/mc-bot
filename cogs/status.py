@@ -159,6 +159,7 @@ class Status(commands.Cog):
                            description=motd, color=color, footer='.help for more commands')
         em.add_field(name="IP", value=f"`{self.ip}`")
         em.add_field(name="Status", value=status_text)
+        
 
         file = None
 
@@ -173,7 +174,7 @@ class Status(commands.Cog):
             else:
                 em.set_thumbnail(
                     url="https://preview.redd.it/9thcbxqlasl51.png?width=464&format=png&auto=webp&s=2500734d9b127af6dc33de51965cef9685d45ef8")
-
+        
         await ctx.send(embed=em, file=file)
 
     @server.command(name="set")
