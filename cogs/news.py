@@ -3,8 +3,6 @@ from datetime import datetime
 from time import mktime
 from typing import Dict
 from typing import Union
-import aiohttp
-import socket
 
 import discord
 import feedparser
@@ -25,12 +23,6 @@ class News(commands.Cog):
         self.last_media_data = datetime.now(pytz.utc)
         self.last_java_version_data = datetime.now(pytz.utc)
 
-        self._resolver = aiohttp.AsyncResolver()
-        self._connector = aiohttp.TCPConnector(
-            resolver=self._resolver,
-            family=socket.AF_INET,
-        )
-        self.ses = aiohttp.ClientSession(loop=bot.loop)
         self.mojang_service: Dict[str, str] = {}
 
         self.autopost.start()
@@ -38,7 +30,7 @@ class News(commands.Cog):
     async def get_media(self) -> Union[discord.Embed, None]:
         """Get rss media."""
         # http_session = aiohttp.ClientSession()
-        async with self.ses.get(Minecraft_News_RSS) as resp:
+        async with self.bot.http_session.get(Minecraft_News_RSS) as resp:
             text = await resp.text()
 
         data = feedparser.parse(text, "lxml")
@@ -55,9 +47,10 @@ class News(commands.Cog):
         # print(self.last_media_data)
 
         if time <= self.last_media_data:
+            log.info('No new minecraft article')
             return None
 
-        async with self.ses.get(latest_post["id"]) as resp:
+        async with self.bot.http_session.get(latest_post["id"]) as resp:
             text = await resp.text()
 
         soup = BeautifulSoup(text, "lxml")
@@ -104,7 +97,7 @@ class News(commands.Cog):
         return embed
 
     async def get_java_releases(self) -> Union[discord.Embed, None]:
-        async with self.ses.get(
+        async with self.bot.http_session.get(
             "https://launchermeta.mojang.com/mc/game/version_manifest.json"
         ) as resp:
             data = await resp.json()
@@ -114,6 +107,7 @@ class News(commands.Cog):
         format = "%Y-%m-%dT%H:%M:%S%z"
         time = datetime.strptime(last_release["time"], format)
         if time <= self.last_java_version_data:
+            log.info('No new minecraft release')
             return None
 
         embed = discord.Embed(

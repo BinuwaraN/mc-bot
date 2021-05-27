@@ -35,7 +35,6 @@ class Server(commands.Cog):
         log.info(f"Looking up Minecraft server IP: {ip}")
         self.server = MinecraftServer.lookup(ip)
         self.promo_msg = "Slash Commands are Here! type forward-slash (\"/\") to bring up a list of all possible commands"
-        self.promo_msg = "‎‎‎ ‎"
 
         if not self.server:
             log.critical(f"Could not find server with an IP of {ip}.")

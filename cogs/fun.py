@@ -1,6 +1,5 @@
 import os
 import discord
-import aiohttp
 import random
 import typing
 
@@ -13,9 +12,7 @@ from discord_slash import cog_ext, SlashContext
 class Fun(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-
-        self.ses = aiohttp.ClientSession(loop=bot.loop)
-
+        
         self.kill_mes = self.load_from_file("kill")
 
     @staticmethod

@@ -23,8 +23,6 @@ class Minecraft(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-        self.ses = aiohttp.ClientSession(loop=bot.loop)
-
     @commands.command(name="mcprofile", aliases=["minecraftprofile", "nametouuid", "uuidtoname", "mcp"])
     @commands.cooldown(1, 4, commands.BucketType.user)
     async def minecraft_profile(self, ctx, player):
@@ -34,7 +32,7 @@ class Minecraft(commands.Cog):
 
         if 17 > len(player) > 1 and player.lower().strip('abcdefghijklmnopqrstuvwxyz1234567890_') == '':
 
-            res = await self.ses.get(f'https://api.mojang.com/users/profiles/minecraft/{player}')
+            res = await self.bot.http_session.get(f'https://api.mojang.com/users/profiles/minecraft/{player}')
 
             if res.status == 204:
                 await ctx.send('Ding dong! That player is invalid or doesn\'t exist.')
@@ -53,9 +51,9 @@ class Minecraft(commands.Cog):
 
         with ctx.typing():
             resps = await asyncio.gather(
-                self.ses.get(
+                self.bot.http_session.get(
                     f'https://api.mojang.com/user/profiles/{uuid}/names'),
-                self.ses.get(
+                self.bot.http_session.get(
                     f'https://sessionserver.mojang.com/session/minecraft/profile/{uuid}')
             )
 

@@ -5,6 +5,7 @@ import aiohttp
 import discord
 from discord.ext import commands
 from discord_slash import SlashCommand
+import socket
 
 import yaml
 import logging
@@ -27,14 +28,13 @@ log.setLevel(logging.INFO)
 log.addHandler(handler)
 
 initial_extensions = [
+    'cogs.events',
     'cogs.server',
     'cogs.minecraft',
     'cogs.owner',
-    'cogs.events',
     'cogs.fun',
     'cogs.news',
 ]
-
 
 def get_prefix(bot, message):
     prefixes = [bot.config["prefix"]]
@@ -70,7 +70,7 @@ class MinecraftBot(commands.Bot):
         log.info("Loading extensions...")
         for extension in initial_extensions:
             self.load_extension(extension)
-
+        
         log.info("Setting initial status before logging in...")
         status_cog = self.get_cog("Server")
         status, text = self.loop.run_until_complete(status_cog.get_status())
@@ -79,6 +79,7 @@ class MinecraftBot(commands.Bot):
 
         self._connection._status = status
         self.activity = game
+        
 
         self.init_ok = None
         self.restart_signal = None
@@ -87,22 +88,33 @@ class MinecraftBot(commands.Bot):
         self._shutdown_mode = ExitCodes.CRITICAL
         self.uptime = None
 
+    async def pre_flight(self) -> None:
+
         self._resolver = aiohttp.AsyncResolver()
         # Use AF_INET as its socket family to prevent HTTPS related
         # problems both locally and in production.
-        # self._connector = aiohttp.TCPConnector(
-        #     resolver=self._resolver,
-        # )
+        self._connector = aiohttp.TCPConnector(
+            resolver=self._resolver,
+            family=socket.AF_INET,
+        )
 
         # Client.login() will call HTTPClient.static_login()
         # which will create a session using this connector attribute.
         self.http_session = aiohttp.ClientSession()
 
-        # try:
-        #     self.load_extension("jishaku")
+        # Load important cogs
+        # self.add_cog(Events(self))
 
-        # except Exception:
-        #     log.info("jishaku is not installed, continuing...")
+        
+    
+    async def start(self, *args, **kwargs):
+        """
+        Overridden start which ensures cog load and other
+        pre-connection tasks are handled
+        """
+        await self.pre_flight()
+        return await super().start(*args, **kwargs)
+
 
     def load_config(self, filename):
         with open(filename, "r") as f:

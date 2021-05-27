@@ -1,14 +1,10 @@
-from bot_errors import NotOnServerError
 import discord
 from discord.ext import commands
-from bot_errors import NoPermissionError
-import aiohttp
 
 
 class Owner(commands.Cog, name="Owner"):
     def __init__(self, bot):
         self.bot = bot
-        self.ses = aiohttp.ClientSession(loop=bot.loop)
 
     @commands.command(name='say')
     @commands.is_owner()
@@ -31,7 +27,7 @@ class Owner(commands.Cog, name="Owner"):
         """
         Change bot profile picture
         """
-        async with self.ses.get(url) as resp:
+        async with self.bot.http_session.get(url) as resp:
             bytes_ = await resp.read()
             await self.bot.user.edit(avatar=bytes_)
         emb = discord.Embed(colour=discord.Color.green(),
