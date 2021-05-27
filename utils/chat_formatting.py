@@ -497,7 +497,8 @@ def humanize_timedelta(
     elif timedelta is not None:
         obj = timedelta.total_seconds()
     else:
-        raise ValueError("You must provide either a timedelta or a number of seconds")
+        raise ValueError(
+            "You must provide either a timedelta or a number of seconds")
 
     seconds = int(obj)
     periods = [
@@ -519,6 +520,7 @@ def humanize_timedelta(
             strings.append(f"{period_value} {unit}")
 
     return ", ".join(strings)
+
 
 def text_to_file(
     text: str,

@@ -34,7 +34,8 @@ class Server(commands.Cog):
         self.ip = ip = self.bot.config["server-ip"]
         log.info(f"Looking up Minecraft server IP: {ip}")
         self.server = MinecraftServer.lookup(ip)
-        self.promo_msg = "Slash Commands are Here!"
+        self.promo_msg = "Slash Commands are Here! type forward-slash (\"/\") to bring up a list of all possible commands"
+        self.promo_msg = "."
 
         if not self.server:
             log.critical(f"Could not find server with an IP of {ip}.")
@@ -79,7 +80,7 @@ class Server(commands.Cog):
                     description="Activate query with `enable-query` in `server.properties`\n",
                     color=discord.Color.red(),
                 )
-                em.set_footer(text='.help for more commands')
+                em.set_footer(text=self.promo_msg)
                 return await message.edit(content=None, embed=em)
 
             em = discord.Embed(
@@ -87,7 +88,7 @@ class Server(commands.Cog):
                 description=players,
                 color=discord.Color.green() if players else discord.Color.green(),
             )
-            em.set_footer(text='.help for more commands')
+            em.set_footer(text=self.promo_msg)
 
             return await message.edit(content=None, embed=em)
         else:
@@ -96,7 +97,7 @@ class Server(commands.Cog):
                 description="An error occured while attempting to query the server.\n",
                 color=discord.Color.red(),
             )
-            em.set_footer(text='.help for more commands')
+            em.set_footer(text=self.promo_msg)
             return await message.edit(content=None, embed=em)
 
     def resolve_favicon(self, status):
@@ -163,6 +164,7 @@ class Server(commands.Cog):
                 em.set_thumbnail(
                     url="https://preview.redd.it/9thcbxqlasl51.png?width=464&format=png&auto=webp&s=2500734d9b127af6dc33de51965cef9685d45ef8")
 
+        em.set_footer(text=self.promo_msg)
         await message.edit(content=None, embed=em, file=file)
 
     @server.command(name="set")

@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 from time import mktime
 from typing import Union
 import discord
@@ -125,7 +125,7 @@ class Minecraft(commands.Cog):
         ) as resp:
             text = await resp.text()
         data = feedparser.parse(text, "lxml")["entries"][:12]
-        embed = discord.Embed(colour=self.bot.color)
+        embed = discord.Embed()
         for post in data:
             format = "%d %m %Y"
             time = datetime.strftime(

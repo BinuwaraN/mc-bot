@@ -1,5 +1,10 @@
+from enum import IntEnum
+from os import system
+from typing import Optional
+import aiohttp
 import discord
 from discord.ext import commands
+from discord_slash import SlashCommand
 
 import yaml
 import logging
@@ -39,7 +44,7 @@ def get_prefix(bot, message):
 description = """Hello! made by null"""
 
 
-class ServerStatus(commands.Bot):
+class MinecraftBot(commands.Bot):
     def __init__(self):
         intents = discord.Intents.default()
         intents.members = True
@@ -78,14 +83,26 @@ class ServerStatus(commands.Bot):
         self.init_ok = None
         self.restart_signal = None
 
-        # self.aiohttp = aiohttp.ClientSession(loop=self.loop)
-        # asyncio.run(self.aiohttp.close())
+        self._last_exception = None
+        self._shutdown_mode = ExitCodes.CRITICAL
+        self.uptime = None
 
-        try:
-            self.load_extension("jishaku")
+        self._resolver = aiohttp.AsyncResolver()
+        # Use AF_INET as its socket family to prevent HTTPS related
+        # problems both locally and in production.
+        # self._connector = aiohttp.TCPConnector(
+        #     resolver=self._resolver,
+        # )
 
-        except Exception:
-            log.info("jishaku is not installed, continuing...")
+        # Client.login() will call HTTPClient.static_login()
+        # which will create a session using this connector attribute.
+        self.http_session = aiohttp.ClientSession()
+
+        # try:
+        #     self.load_extension("jishaku")
+
+        # except Exception:
+        #     log.info("jishaku is not installed, continuing...")
 
     def load_config(self, filename):
         with open(filename, "r") as f:
@@ -117,6 +134,27 @@ class ServerStatus(commands.Bot):
         em.description = description
         await ctx.send(embed=em)
 
+    async def shutdown(self, *, restart: Optional[bool] = False) -> None:
+        """Gracefully quit bot.
+
+        The program will exit with code :code:`0` by default.
+
+        Parameters
+        ----------
+        restart : bool
+            If :code:`True`, the program will exit with code :code:`26`. If the
+            launcher sees this, it will attempt to restart the bot.
+
+        """
+        if not restart:
+            self._shutdown_mode = ExitCodes.SHUTDOWN
+        else:
+            self._shutdown_mode = ExitCodes.RESTART
+
+        await self.close()
+        await self.http_session.close()
+        system.exit(self._shutdown_mode)
+
     async def on_ready(self):
         # self.database_commands = DatabaseCommands()
 
@@ -128,7 +166,18 @@ class ServerStatus(commands.Bot):
         super().run(self.config["bot-token"])
 
 
+class ExitCodes(IntEnum):
+    # This needs to be an int enum to be used
+    # with sys.exit
+    CRITICAL = 1
+    SHUTDOWN = 0
+    RESTART = 26
+
+
 if __name__ == "__main__":
-    bot = ServerStatus()
+    bot = MinecraftBot()
+    slash = SlashCommand(bot, sync_commands=True, sync_on_cog_reload=True)
+    
     bot.help_command = PrettyHelp(ending_note=description)
+    
     bot.run()

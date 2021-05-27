@@ -1,3 +1,4 @@
+from discord.colour import Color
 from utils.chat_formatting import box, format_perms_list, humanize_timedelta, inline, pagify
 from bot_errors import NoPermissionError
 from discord.ext import commands
@@ -173,7 +174,10 @@ class Events(commands.Cog):
                     ).format(fmt=fmt)
                 )
 
-
+    @commands.Cog.listener("on_slash_command_error")
+    async def on_slash_command_error(self, ctx, ex) -> None:
+        await self.handle_check_failure(ctx, ex)
+        
     @commands.Cog.listener("on_command_error")
     async def on_command_error(self, ctx, error, unhandled_by_cog=False):  # noqa: C901
         if not unhandled_by_cog:
@@ -182,7 +186,8 @@ class Events(commands.Cog):
 
             if ctx.cog:
                 if (
-                    commands.Cog._get_overridden_method(ctx.cog.cog_command_error)
+                    commands.Cog._get_overridden_method(
+                        ctx.cog.cog_command_error)
                     is not None
                 ):
                     return
@@ -288,14 +293,16 @@ class Events(commands.Cog):
                 ctx.command.qualified_name
             )
             exception_log += "".join(
-                traceback.format_exception(type(error), error, error.__traceback__)
+                traceback.format_exception(
+                    type(error), error, error.__traceback__)
             )
             self.bot._last_exception = exception_log
             await ctx.send(inline(message))
-            destination = self.bot.get_channel(789243692887572535)
-            embed = discord.Embed(title="Bug", colour=0x00FF00)
+            destination = self.bot.get_channel(847404685241221140)
+            embed = discord.Embed(title="Bug", color=discord.Color.red())
 
-            embed.set_author(name=str(ctx.author), icon_url=ctx.author.avatar_url)
+            embed.set_author(name=str(ctx.author),
+                             icon_url=ctx.author.avatar_url)
             embed.add_field(name="Command", value=ctx.command)
             embed.timestamp = ctx.message.created_at
 
@@ -313,7 +320,7 @@ class Events(commands.Cog):
             )
             embed.set_footer(text=f"Author ID: {ctx.author.id}")
 
-            await destination.send(embed=embed)
+            # await destination.send(embed=embed)
             for page in pagify(self.bot._last_exception, shorten_by=10):
                 try:
                     await destination.send(box(page, lang="py"))

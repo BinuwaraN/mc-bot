@@ -157,11 +157,12 @@ class News(commands.Cog):
         if article_embed is not None:
             log.info('New minecraft article')
             message = await channel.send(embed=article_embed)
+            await message.publish()
 
         if release_embed is not None:
             log.info('New minecraft release')
             message = await channel.send(embed=release_embed)
-        # await message.publish()
+            await message.publish()
 
     def cog_unload(self) -> None:
         """Stop news posting tasks on cog unload."""
