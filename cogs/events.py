@@ -1,3 +1,4 @@
+from utils.chat_formatting import box, format_perms_list, humanize_timedelta, inline, pagify
 from bot_errors import NoPermissionError
 from discord.ext import commands
 import traceback
@@ -108,73 +109,6 @@ class Events(commands.Cog):
 
         await channel.send(embed=embed)
 
-    @commands.Cog.listener()
-    async def on_command_error(self, ctx, error):
-        red_tick = "\N{CROSS MARK}"
-
-        if hasattr(ctx, "handled"):
-            return
-
-        if isinstance(error, commands.NoPrivateMessage):
-            message = await ctx.send(
-                f"{red_tick} This command can't be used in DMs."
-            )
-
-        if hasattr(error, 'original'):
-            if isinstance(error.original, NoPermissionError):
-                message = await ctx.send('You don\'t have permission for that cool command.')
-
-        elif isinstance(error, commands.ArgumentParsingError):
-            message = await ctx.send(f"{red_tick} {error}")
-
-        elif isinstance(error, commands.CommandOnCooldown):
-            message = await ctx.send(
-                f"{red_tick} You are on cooldown. Try again in {int(error.retry_after)} seconds."
-            )
-
-        elif isinstance(error, commands.errors.BotMissingPermissions):
-            perms = ""
-
-            for perm in error.missing_perms:
-                formatted = (
-                    str(perm).replace("_", " ").replace(
-                        "guild", "server").capitalize()
-                )
-                perms += f"\n- `{formatted}`"
-
-            message = await ctx.send(
-                f"{red_tick} I am missing some required permission(s):{perms}"
-            )
-
-        elif isinstance(error, commands.errors.BadArgument):
-            message = await ctx.send(f"{red_tick} {error}")
-
-        elif isinstance(error, commands.errors.MissingRequiredArgument):
-            message = await ctx.send(
-                f"{red_tick} Missing a required argument: `{error.param.name}`"
-            )
-
-        elif (
-            isinstance(error, commands.CommandInvokeError)
-            and str(ctx.command) == "help"
-        ):
-            pass
-
-        elif isinstance(error, commands.CommandInvokeError):
-            original = error.original
-            # if True: # for debugging
-            if not isinstance(original, discord.HTTPException):
-                print(
-                    "Ignoring exception in command {}:".format(ctx.command),
-                    file=sys.stderr,
-                )
-                traceback.print_exception(
-                    type(error), error, error.__traceback__, file=sys.stderr
-                )
-
-                await self.send_unexpected_error(ctx, error)
-                return
-
     # async def my_background_task(self):
     #     await self.wait_until_ready()
     #     counter = 0
@@ -197,6 +131,200 @@ class Events(commands.Cog):
     #             await channel.send(embed=em)
     #             await self.stop()
     #         await asyncio.sleep(5)
+
+    @staticmethod
+    async def handle_check_failure(ctx: commands.Context, e) -> None:
+        """
+        Send an error message in `ctx` for certain types of CheckFailure.
+        The following types are handled:
+        * BotMissingPermissions
+        * BotMissingRole
+        * BotMissingAnyRole
+        * NoPrivateMessage
+        * InWhitelistCheckFailure
+        """
+        bot_missing_errors = (
+            commands.errors.MissingPermissions,
+            commands.errors.MissingRole,
+            commands.errors.MissingAnyRole,
+        )
+
+        if isinstance(e, bot_missing_errors):
+            missing = [
+                perm.replace("_", " ").replace("guild", "server").title()
+                for perm in e.missing_perms
+            ]
+            if len(missing) > 2:
+                fmt = f"{'**, **'.join(missing[:-1])}, and {missing[-1]}"
+            else:
+                fmt = " and ".join(missing)
+            if len(missing) > 1:
+                await ctx.send(
+                    (
+                        "Sorry, it looks like you don't have the **{fmt}** perm"
+                        "missions I need to do that."
+                    ).format(fmt=fmt)
+                )
+            else:
+                await ctx.send(
+                    (
+                        "Sorry, it looks like you don't have the **{fmt}** per"
+                        "missions I need to do that."
+                    ).format(fmt=fmt)
+                )
+
+
+    @commands.Cog.listener("on_command_error")
+    async def on_command_error(self, ctx, error, unhandled_by_cog=False):  # noqa: C901
+        if not unhandled_by_cog:
+            if hasattr(ctx.command, "on_error"):
+                return
+
+            if ctx.cog:
+                if (
+                    commands.Cog._get_overridden_method(ctx.cog.cog_command_error)
+                    is not None
+                ):
+                    return
+
+        if isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send_help(ctx.command)
+        elif isinstance(error, commands.ArgumentParsingError):
+            msg = ("`{user_input}` is not a valid value for `{command}`").format(
+                user_input=error.user_input, command=error.cmd
+            )
+            if error.custom_help_msg:
+                msg += f"\n{error.custom_help_msg}"
+            await ctx.send(msg)
+            if error.send_cmd_help:
+                await ctx.send_help(ctx.command)
+        elif isinstance(error, commands.ConversionError):
+            if error.args:
+                await ctx.send(error.args[0])
+            else:
+                await ctx.send_help(ctx.command)
+        elif isinstance(error, commands.UserInputError):
+            await ctx.send_help(ctx.command)
+        elif isinstance(error, commands.BotMissingPermissions):
+            if bin(error.missing.value).count("1") == 1:  # Only one perm missing
+                msg = (
+                    "I require the {permission} permission to execute that command."
+                ).format(permission=format_perms_list(error.missing))
+            else:
+                msg = (
+                    "I require {permission_list} permissions to execute that command."
+                ).format(permission_list=format_perms_list(error.missing))
+            await ctx.send(msg)
+        elif isinstance(error, commands.NoPrivateMessage):
+            await ctx.send(("That command is not available in DMs."))
+        elif isinstance(error, commands.PrivateMessageOnly):
+            await ctx.send(("That command is only available in DMs."))
+        elif isinstance(error, commands.CheckFailure):
+            await self.handle_check_failure(ctx, error)
+        elif isinstance(error, commands.CommandOnCooldown):
+            # if self.bot._bypass_cooldowns and ctx.author.id in self.bot.owner_ids:
+            #     ctx.command.reset_cooldown(ctx)
+            #     new_ctx = await self.bot.get_context(ctx.message)
+            #     await self.bot.invoke(new_ctx)
+            #     return
+            if delay := humanize_timedelta(seconds=error.retry_after):
+                msg = ("This command is on cooldown. Try again in {delay}.").format(
+                    delay=delay
+                )
+            else:
+                msg = ("This command is on cooldown. Try again in 1 second.")
+            await ctx.send(msg, delete_after=error.retry_after)
+        elif isinstance(error, commands.MaxConcurrencyReached):
+            if error.per is commands.BucketType.default:
+                if error.number > 1:
+                    msg = (
+                        "Too many people using this command."
+                        " It can only be used {number} times concurrently."
+                    ).format(number=error.number)
+                else:
+                    msg = (
+                        "Too many people using this command."
+                        " It can only be used once concurrently."
+                    )
+            elif error.per in (commands.BucketType.user, commands.BucketType.member):
+                if error.number > 1:
+                    msg = (
+                        "That command is still completing,"
+                        " it can only be used {number} times per {type} concurrently."
+                    ).format(number=error.number, type=error.per.name)
+                else:
+                    msg = (
+                        "That command is still completing,"
+                        " it can only be used once per {type} concurrently."
+                    ).format(type=error.per.name)
+            else:
+                if error.number > 1:
+                    msg = (
+                        "Too many people using this command."
+                        " It can only be used {number} times per {type} concurrently."
+                    ).format(number=error.number, type=error.per.name)
+                else:
+                    msg = (
+                        "Too many people using this command."
+                        " It can only be used once per {type} concurrently."
+                    ).format(type=error.per.name)
+            await ctx.send(msg)
+        elif isinstance(error, commands.CommandInvokeError):
+            if isinstance(error.original, discord.errors.HTTPException):
+                if error.original.code == 50035:
+                    await ctx.send("Invalid input, too long.")
+                    return
+
+            log.exception(
+                "Exception in command '{}'".format(ctx.command.qualified_name),
+                exc_info=error.original,
+            )
+
+            message = (
+                "Error in command '{command}'. It has "
+                "been recorded and should be fixed soon."
+            ).format(command=ctx.command.qualified_name)
+            exception_log = "Exception in command '{}'\n" "".format(
+                ctx.command.qualified_name
+            )
+            exception_log += "".join(
+                traceback.format_exception(type(error), error, error.__traceback__)
+            )
+            self.bot._last_exception = exception_log
+            await ctx.send(inline(message))
+            destination = self.bot.get_channel(789243692887572535)
+            embed = discord.Embed(title="Bug", colour=0x00FF00)
+
+            embed.set_author(name=str(ctx.author), icon_url=ctx.author.avatar_url)
+            embed.add_field(name="Command", value=ctx.command)
+            embed.timestamp = ctx.message.created_at
+
+            if ctx.guild is not None:
+                embed.add_field(
+                    name="Server",
+                    value=f"{ctx.guild.name} (ID: {ctx.guild.id})",
+                    inline=False,
+                )
+
+            embed.add_field(
+                name="Channel",
+                value=f"{ctx.channel} (ID: {ctx.channel.id})",
+                inline=False,
+            )
+            embed.set_footer(text=f"Author ID: {ctx.author.id}")
+
+            await destination.send(embed=embed)
+            for page in pagify(self.bot._last_exception, shorten_by=10):
+                try:
+                    await destination.send(box(page, lang="py"))
+                except discord.HTTPException:
+                    log.warning(
+                        "Could not send traceback to traceback channel use /tr"
+                        "aceback to get the most recent error"
+                    )
+                    return
+        else:
+            log.exception(type(error).__name__, exc_info=error)
 
 
 def setup(bot):
