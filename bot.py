@@ -22,8 +22,8 @@ log.setLevel(logging.INFO)
 log.addHandler(handler)
 
 initial_extensions = [
-    'cogs.status',
-    'cogs.player',
+    'cogs.server',
+    'cogs.minecraft',
     'cogs.owner',
     'cogs.events',
     'cogs.fun',
@@ -35,9 +35,8 @@ def get_prefix(bot, message):
     prefixes = [bot.config["prefix"]]
     return commands.when_mentioned_or(*prefixes)(bot, message)
 
-# send function/method for easy sending of embed messages with small amounts of text
 
-description = """hello! made by null"""
+description = """Hello! made by null"""
 
 
 class ServerStatus(commands.Bot):
@@ -68,7 +67,7 @@ class ServerStatus(commands.Bot):
             self.load_extension(extension)
 
         log.info("Setting initial status before logging in...")
-        status_cog = self.get_cog("Status")
+        status_cog = self.get_cog("Server")
         status, text = self.loop.run_until_complete(status_cog.get_status())
         game = discord.Game(text)
         status_cog.activity = game

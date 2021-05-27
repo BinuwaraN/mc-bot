@@ -17,6 +17,7 @@ Minecraft_News_RSS = "https://www.minecraft.net/en-us/feeds/community-content/rs
 
 log = logging.getLogger("bot")
 
+
 class News(commands.Cog):
     def __init__(self, bot) -> None:
         """Init."""
@@ -33,14 +34,12 @@ class News(commands.Cog):
         self.mojang_service: Dict[str, str] = {}
 
         self.autopost.start()
-        
 
     async def get_media(self) -> Union[discord.Embed, None]:
         """Get rss media."""
         # http_session = aiohttp.ClientSession()
         async with self.ses.get(Minecraft_News_RSS) as resp:
             text = await resp.text()
-            
 
         data = feedparser.parse(text, "lxml")
 
@@ -49,7 +48,8 @@ class News(commands.Cog):
 
         # run checks to see wether it should be posted
 
-        time = datetime.fromtimestamp(mktime(latest_post["published_parsed"]), pytz.utc)
+        time = datetime.fromtimestamp(
+            mktime(latest_post["published_parsed"]), pytz.utc)
 
         # print(time)
         # print(self.last_media_data)
@@ -145,7 +145,7 @@ class News(commands.Cog):
             ),
         )
         return embed
-    
+
     @tasks.loop(minutes=10)
     async def autopost(self) -> None:
         await self.bot.wait_until_ready()
@@ -157,7 +157,7 @@ class News(commands.Cog):
         if article_embed is not None:
             log.info('New minecraft article')
             message = await channel.send(embed=article_embed)
-        
+
         if release_embed is not None:
             log.info('New minecraft release')
             message = await channel.send(embed=release_embed)
@@ -166,6 +166,7 @@ class News(commands.Cog):
     def cog_unload(self) -> None:
         """Stop news posting tasks on cog unload."""
         self.autopost.cancel()
+
 
 def setup(bot):
     bot.add_cog(News(bot))

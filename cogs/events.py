@@ -40,18 +40,6 @@ class Events(commands.Cog):
             log.info(f"{m.author} in {destination}: {m.content}")
             await m.channel.send(random.choice(['😊', '😎', '{} is the best 😁'.format(m.author.name)]))
 
-        # if '!play' in m.content.lower():
-        #     destination = None
-
-        #     if m.guild is None:
-        #         destination = "Private Message"
-        #     else:
-        #         destination = f"#{m.channel} ({m.guild})"
-
-        #     log.info(f"{m.author} in {destination}: {m.content}")
-
-        #     await m.channel.send('I can play music too (with highest quality possible), `.play [url or name]` :notes:. \nFor more info type `.help Music` :musical_note:')
-
         # if 'new year' in m.content.lower() or 'happy year' in m.content.lower() in m.content.lower() and 'bot' in m.content.lower():
         #     em = discord.Embed(
         #         title='Same to you!',
@@ -110,7 +98,6 @@ class Events(commands.Cog):
             f'Where\'s {member.name} in the server!',
             f'It\'s dangerous to go alone, take {member.name}',
         ]
-        # channel = self.bot.get_channel(767537970348818456)
         channel = self.bot.get_channel(789243692887572535)
 
         url = 'https://cdn.discordapp.com/attachments/727135407627698177/832940573555687444/Vibe_Check_to_enter_Whole_-_Copy.png'

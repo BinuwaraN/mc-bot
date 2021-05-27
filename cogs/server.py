@@ -11,21 +11,8 @@ import datetime
 import io
 import re
 import base64
-from bot_errors import NotOnServerError
-
 
 log = logging.getLogger("bot")
-
-
-def check_mod(user, admin_users):
-    try:
-        for userid in admin_users:
-            if str(user.id) in str(userid):
-                return True
-    except AttributeError:
-        raise NotOnServerError
-
-    return False
 
 
 class ServerNotFound(commands.CommandError):
@@ -35,7 +22,7 @@ class ServerNotFound(commands.CommandError):
         super().__init__(f"Could not find server with an IP of {ip}.")
 
 
-class Status(commands.Cog):
+class Server(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
@@ -47,6 +34,7 @@ class Status(commands.Cog):
         self.ip = ip = self.bot.config["server-ip"]
         log.info(f"Looking up Minecraft server IP: {ip}")
         self.server = MinecraftServer.lookup(ip)
+        self.promo_msg = "Slash Commands are Here!"
 
         if not self.server:
             log.critical(f"Could not find server with an IP of {ip}.")
@@ -67,8 +55,10 @@ class Status(commands.Cog):
     )
     async def players(self, ctx):
         """Get player list for the current server"""
+        message = await ctx.send('⏳ **Retrieving player info... Please wait...**')
+
         players = ''
-        partialStatus = functools.partial(self.server.status)
+
         partial = functools.partial(self.server.query)
 
         status, text = await self.get_status()
@@ -90,7 +80,7 @@ class Status(commands.Cog):
                     color=discord.Color.red(),
                 )
                 em.set_footer(text='.help for more commands')
-                return await ctx.send(embed=em)
+                return await message.edit(content=None, embed=em)
 
             em = discord.Embed(
                 title="Current Players Online:" if players else 'No one online right now',
@@ -99,7 +89,7 @@ class Status(commands.Cog):
             )
             em.set_footer(text='.help for more commands')
 
-            return await ctx.send(embed=em)
+            return await message.edit(content=None, embed=em)
         else:
             em = discord.Embed(
                 title="Server may be offline",
@@ -107,7 +97,7 @@ class Status(commands.Cog):
                 color=discord.Color.red(),
             )
             em.set_footer(text='.help for more commands')
-            return await ctx.send(embed=em)
+            return await message.edit(content=None, embed=em)
 
     def resolve_favicon(self, status):
         if status.favicon:
@@ -123,13 +113,12 @@ class Status(commands.Cog):
         invoke_without_command=True,
         aliases=["ip"],
     )
-
     async def server(self, ctx):
         """Get info about the current server"""
         partial = functools.partial(self.server.status)
         try:
-            async with ctx.typing():
-                status = await self.bot.loop.run_in_executor(None, partial)
+            message = await ctx.send('⏳ **Retrieving server info... Please wait...**')
+            status = await self.bot.loop.run_in_executor(None, partial)
 
         except Exception:
             status = None
@@ -159,7 +148,6 @@ class Status(commands.Cog):
                            description=motd, color=color, footer='.help for more commands')
         em.add_field(name="IP", value=f"`{self.ip}`")
         em.add_field(name="Status", value=status_text)
-        
 
         file = None
 
@@ -174,8 +162,8 @@ class Status(commands.Cog):
             else:
                 em.set_thumbnail(
                     url="https://preview.redd.it/9thcbxqlasl51.png?width=464&format=png&auto=webp&s=2500734d9b127af6dc33de51965cef9685d45ef8")
-        
-        await ctx.send(embed=em, file=file)
+
+        await message.edit(content=None, embed=em, file=file)
 
     @server.command(name="set")
     # @commands.is_owner()
@@ -201,8 +189,9 @@ class Status(commands.Cog):
     @commands.cooldown(1, 30, commands.BucketType.user)
     async def update(self, ctx):
         """Manually update the status if it broke"""
+        message = await ctx.send('⏳ **Updating status... Please wait...**')
         await self.update_status(force=True)
-        await ctx.send("Updated status")
+        await message.edit(content="Updated Status")
 
     async def set_status(self, status, text, *, force=False):
         game = discord.Game(text)
@@ -285,10 +274,8 @@ class Status(commands.Cog):
 
     @commands.Cog.listener()
     async def on_guild_join(self, guild):
-        if len(self.guilds) == 1:
-            log.info("Joined first guild, setting status")
-            await self.update_status()
+        await self.update_status()
 
 
 def setup(bot):
-    bot.add_cog(Status(bot))
+    bot.add_cog(Server(bot))
