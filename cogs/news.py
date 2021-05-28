@@ -110,9 +110,7 @@ class News(commands.Cog):
             log.info('No new minecraft release')
             return None
 
-        embed = discord.Embed(
-            colour=self.bot.color,
-        )
+        embed = discord.Embed()
 
         embed.add_field(name=("Name"), value=last_release["id"])
         embed.add_field(

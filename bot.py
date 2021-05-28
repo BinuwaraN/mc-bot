@@ -45,6 +45,11 @@ description = """Hello! made by null"""
 
 
 class MinecraftBot(commands.Bot):
+
+    http_session: aiohttp.ClientSession
+    _connector: aiohttp.TCPConnector
+    _resolver: aiohttp.AsyncResolver
+
     def __init__(self):
         intents = discord.Intents.default()
         intents.members = True
