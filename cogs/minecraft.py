@@ -1,3 +1,4 @@
+"""Minecraft related stuff"""
 from datetime import datetime
 from time import mktime
 from typing import Union
@@ -28,7 +29,7 @@ class Minecraft(commands.Cog):
     async def minecraft_profile(self, ctx, player):
         """View a players Minecraft UUID, Username history and skin."""
 
-        message = await ctx.send('⏳ **Retrieving profile info... Please wait...**')
+        wait_message = await ctx.send('⏳ **Retrieving profile info... Please wait...**')
 
         if 17 > len(player) > 1 and player.lower().strip('abcdefghijklmnopqrstuvwxyz1234567890_') == '':
 
@@ -48,14 +49,13 @@ class Minecraft(commands.Cog):
         else:
             await ctx.send('Ding dong! That player is invalid or doesn\'t exist.')
             return
-
-        with ctx.typing():
-            resps = await asyncio.gather(
-                self.bot.http_session.get(
-                    f'https://api.mojang.com/user/profiles/{uuid}/names'),
-                self.bot.http_session.get(
-                    f'https://sessionserver.mojang.com/session/minecraft/profile/{uuid}')
-            )
+        
+        resps = await asyncio.gather(
+            self.bot.http_session.get(
+                f'https://api.mojang.com/user/profiles/{uuid}/names'),
+            self.bot.http_session.get(
+                f'https://sessionserver.mojang.com/session/minecraft/profile/{uuid}')
+        )
 
         for res in resps:
             if res.status == 204:
@@ -109,15 +109,15 @@ class Minecraft(commands.Cog):
         embed.add_field(name=(':label: ' + 'Name History'),
                         value=name_hist, inline=False)
 
-        await message.edit(content=None, embed=embed)
+        await ctx.send(content=None, embed=embed)
+        await wait_message.delete()
 
     @commands.command()
     async def news(self, ctx: Union[commands.Context, SlashContext]) -> None:
         """
             Get latest Minecraft News
         """
-        # await ctx.channel.trigger_typing()
-        message = await ctx.send('⏳ **Retrieving news... Please wait...**')
+        wait_message = await ctx.send('⏳ **Retrieving news... Please wait...**')
         async with self.bot.http_session.get(
             "https://www.minecraft.net/en-us/feeds/community-content/rss"
         ) as resp:
@@ -139,7 +139,8 @@ class Minecraft(commands.Cog):
                     "[Article Link]({link})"
                 ).format(category=post["primarytag"], pub=time, link=post["id"]),
             )
-        await message.edit(content=None, embed=embed)
+        await ctx.send(content=None, embed=embed)
+        await wait_message.delete()
 
 
 def setup(bot):

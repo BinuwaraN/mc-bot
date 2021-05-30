@@ -1,3 +1,5 @@
+"""Fun stuff"""
+
 import os
 import discord
 import random
