@@ -1,11 +1,9 @@
 from discord.colour import Color
 from utils.chat_formatting import box, format_perms_list, humanize_timedelta, inline, pagify
-from bot_errors import NoPermissionError
 from discord.ext import commands
 import traceback
 import discord
 import random
-import sys
 import logging
 
 log = logging.getLogger("bot")
@@ -14,20 +12,11 @@ log = logging.getLogger("bot")
 class Events(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.error_channel = self.bot.config["error-channel"]
         # self.bg_task = self.bot.loop.create_task(self.my_background_task())
-
-    # async def my_background_task(self):
-    #     await self.wait_until_ready()
-    #     counter = 0
-    #     channel = self.get_channel(767537970348818456)  # channel ID goes here
-    #     while not self.is_closed():
-    #         counter += 1
-    #         await channel.send(counter)
-    #         await asyncio.sleep(5)  # task runs every 60 seconds
 
     @commands.Cog.listener()
     async def on_message(self, m):
-        # e = Emojize()
         if m.author.bot:
             return
 
@@ -41,16 +30,6 @@ class Events(commands.Cog):
 
             log.info(f"{m.author} in {destination}: {m.content}")
             await m.channel.send(random.choice(['😊', '😎', '{} is the best 😁'.format(m.author.name)]))
-
-        # if 'new year' in m.content.lower() or 'happy year' in m.content.lower() in m.content.lower() and 'bot' in m.content.lower():
-        #     em = discord.Embed(
-        #         title='Same to you!',
-        #         color=discord.Color.dark_teal(),
-        #     )
-        #     em.set_footer(text='Beep Boop')
-        #     em.set_thumbnail(
-        #         url="https://media.giphy.com/media/2tKbpTlzGeXYp7rmlS/giphy.gif")
-        #     await m.reply(embed=em)
 
         if "bad bot" in m.content.lower():
             destination = None
@@ -177,7 +156,7 @@ class Events(commands.Cog):
     @commands.Cog.listener("on_slash_command_error")
     async def on_slash_command_error(self, ctx, ex) -> None:
         await self.handle_check_failure(ctx, ex)
-        
+
     @commands.Cog.listener("on_command_error")
     async def on_command_error(self, ctx, error, unhandled_by_cog=False):  # noqa: C901
         if not unhandled_by_cog:
@@ -298,7 +277,7 @@ class Events(commands.Cog):
             )
             self.bot._last_exception = exception_log
             await ctx.send(inline(message))
-            destination = self.bot.get_channel(847404685241221140)
+            destination = self.bot.get_channel(self.error_channel)
             embed = discord.Embed(title="Bug", color=discord.Color.red())
 
             embed.set_author(name=str(ctx.author),
@@ -320,7 +299,8 @@ class Events(commands.Cog):
             )
             embed.set_footer(text=f"Author ID: {ctx.author.id}")
 
-            # await destination.send(embed=embed)
+            await destination.send(embed=embed)
+
             for page in pagify(self.bot._last_exception, shorten_by=10):
                 try:
                     await destination.send(box(page, lang="py"))
