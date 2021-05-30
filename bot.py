@@ -36,6 +36,7 @@ initial_extensions = [
     'cogs.news',
 ]
 
+
 def get_prefix(bot, message):
     prefixes = [bot.config["prefix"]]
     return commands.when_mentioned_or(*prefixes)(bot, message)
@@ -75,7 +76,7 @@ class MinecraftBot(commands.Bot):
         log.info("Loading extensions...")
         for extension in initial_extensions:
             self.load_extension(extension)
-        
+
         log.info("Setting initial status before logging in...")
         status_cog = self.get_cog("Server")
         status, text = self.loop.run_until_complete(status_cog.get_status())
@@ -84,7 +85,6 @@ class MinecraftBot(commands.Bot):
 
         self._connection._status = status
         self.activity = game
-        
 
         self.init_ok = None
         self.restart_signal = None
@@ -110,8 +110,6 @@ class MinecraftBot(commands.Bot):
         # Load important cogs
         # self.add_cog(Events(self))
 
-        
-    
     async def start(self, *args, **kwargs):
         """
         Overridden start which ensures cog load and other
@@ -119,7 +117,6 @@ class MinecraftBot(commands.Bot):
         """
         await self.pre_flight()
         return await super().start(*args, **kwargs)
-
 
     def load_config(self, filename):
         with open(filename, "r") as f:
@@ -194,7 +191,7 @@ class ExitCodes(IntEnum):
 if __name__ == "__main__":
     bot = MinecraftBot()
     slash = SlashCommand(bot, sync_commands=True, sync_on_cog_reload=True)
-    
+
     bot.help_command = PrettyHelp(ending_note=description)
-    
+
     bot.run()

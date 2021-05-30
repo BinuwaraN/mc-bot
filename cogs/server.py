@@ -1,6 +1,12 @@
 """MC server stuff"""
+from typing import Optional, Tuple, Union
 import discord
 from discord.ext import commands, tasks
+
+from discord_slash.context import SlashContext
+from discord_slash import cog_ext
+from discord_slash import SlashContext
+from discord_slash.utils.manage_commands import create_option
 
 from mcstatus import MinecraftServer
 import asyncio
@@ -56,7 +62,7 @@ class Server(commands.Cog):
     )
     async def players(self, ctx):
         """Get player list for the current server"""
-        message = await ctx.send('⏳ **Retrieving player info... Please wait...**')
+        wait_message = await ctx.send('⏳ **Retrieving player info... Please wait...**')
 
         players = ''
 
@@ -81,7 +87,9 @@ class Server(commands.Cog):
                     color=discord.Color.red(),
                 )
                 # em.set_footer(text=self.promo_msg)
-                return await message.edit(content=None, embed=em)
+
+                await ctx.send(content=None, embed=em)
+                return await wait_message.delete()
 
             em = discord.Embed(
                 title="Current Players Online:" if players else 'No one online right now',
@@ -90,7 +98,8 @@ class Server(commands.Cog):
             )
             # em.set_footer(text=self.promo_msg)
 
-            return await message.edit(content=None, embed=em)
+            await ctx.send(content=None, embed=em)
+            return await wait_message.delete()
         else:
             em = discord.Embed(
                 title="Server may be offline",
@@ -98,7 +107,8 @@ class Server(commands.Cog):
                 color=discord.Color.red(),
             )
             # em.set_footer(text=self.promo_msg)
-            return await message.edit(content=None, embed=em)
+            await ctx.send(content=None, embed=em)
+            return await wait_message.delete()
 
     def resolve_favicon(self, status):
         if status.favicon:
@@ -114,11 +124,31 @@ class Server(commands.Cog):
         invoke_without_command=True,
         aliases=["ip"],
     )
-    async def server(self, ctx):
+    async def server(
+            self,
+            ctx: Union[commands.Context, SlashContext],
+            address: Optional[str] = None):
+
         """Get info about the current server"""
+        wait_message = await ctx.send('⏳ **Retrieving server info... Please wait...**')
+
         partial = functools.partial(self.server.status)
+
+        if address:
+
+            if len(address.split(":")) > 2:
+                await ctx.send("Please provide a valid address")
+                return
+
+            server = MinecraftServer.lookup(address)
+
+            if not server:
+                return await ctx.send(f"Could not find server with an address of {address}.")
+
+            partial = functools.partial(server.status)
+
         try:
-            message = await ctx.send('⏳ **Retrieving server info... Please wait...**')
+
             status = await self.bot.loop.run_in_executor(None, partial)
 
         except Exception:
@@ -147,7 +177,8 @@ class Server(commands.Cog):
 
         em = discord.Embed(title="Minecraft Server Info",
                            description=motd, color=color, footer='.help for more commands')
-        em.add_field(name="IP", value=f"`{self.ip}`")
+        em.add_field(
+            name="IP", value=f"`{self.ip if not address else address}`")
         em.add_field(name="Status", value=status_text)
 
         file = None
@@ -165,7 +196,25 @@ class Server(commands.Cog):
                     url="https://preview.redd.it/9thcbxqlasl51.png?width=464&format=png&auto=webp&s=2500734d9b127af6dc33de51965cef9685d45ef8")
 
         # em.set_footer(text=self.promo_msg)
-        await message.edit(content=None, embed=em, file=file)
+        await ctx.send(content=None, embed=em, file=file)
+        await wait_message.delete()
+
+    @cog_ext.cog_slash(
+        name="server",
+        options=[
+            create_option(
+                name="address",
+                description="Address of server defaults to your linked server.",
+                option_type=3,
+                required=False,
+            ),
+        ],
+    )
+    async def slash_server(
+        self, ctx: SlashContext, address: str = None
+    ) -> None:
+        await ctx.defer()
+        await self.server(ctx, address)
 
     @server.command(name="set")
     # @commands.is_owner()
