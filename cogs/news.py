@@ -66,12 +66,13 @@ class News(commands.Cog):
             description=text,
             # colour=self.bot.color,
             url=f"https://minecraft.net{latest_post['imageurl']}",
-            thumbnail=author_image,
+            # thumbnail=author_image,
         )
 
         # add categories
         embed.set_image(url=f"https://minecraft.net{latest_post['imageurl']}")
-        embed.set_thumbnail(url=author_image)
+        if author_image:
+            embed.set_thumbnail(url=author_image)
         embed.add_field(name=("Category"), value=latest_post["primarytag"])
         embed.add_field(name=("Author"), value=author)
         embed.add_field(
