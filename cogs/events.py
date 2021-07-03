@@ -1,4 +1,3 @@
-from discord.colour import Color
 from utils.chat_formatting import box, format_perms_list, humanize_timedelta, inline, pagify
 from discord.ext import commands
 import traceback

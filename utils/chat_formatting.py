@@ -7,10 +7,8 @@ from typing import List
 from typing import Optional
 from typing import Sequence
 from typing import SupportsInt
-from typing import Union
 
 from babel.lists import format_list as babel_list
-from babel.numbers import format_decimal
 
 import discord
 

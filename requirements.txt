@@ -2,7 +2,6 @@ aiohttp<3.7.0
 discord.py
 mcstatus
 pyyaml
-jishaku
 requests
 arrow
 datetime

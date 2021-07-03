@@ -1,5 +1,5 @@
 """MC server stuff"""
-from typing import Optional, Tuple, Union
+from typing import Optional, Union
 import discord
 from discord.ext import commands, tasks
 

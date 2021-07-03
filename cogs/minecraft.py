@@ -6,7 +6,6 @@ import discord
 import logging
 from discord.ext import commands
 import asyncio
-import aiohttp
 import asyncio
 import logging
 import base64
